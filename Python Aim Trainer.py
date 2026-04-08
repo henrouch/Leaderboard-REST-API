@@ -2,61 +2,32 @@ import math
 import random
 import time
 import pygame
-import requests
+
 
 pygame.init()
 
 WIDTH, HEIGHT = 800, 600  # Defines the dimensions of the game window
 Window = pygame.display.set_mode((WIDTH, HEIGHT))  # Initialize a Pygame window
 pygame.display.set_caption("Python Aim Trainer")  # Sets a title for the Pygame window
-Size = 0
-TARGET_INCREMENT = 0  # The number of milliseconds before another target is created
+Size = 30
+TARGET_INCREMENT = 1000  # The number of milliseconds before another target is created
 TARGET_EVENT = pygame.USEREVENT  # Aids in the creation of a custom event in the game
 TARGET_PADDING = 40  # Number of pixels the targets are spaced from the edge of the screen
 BG_COLOR = (0, 25, 40)  # Background color
-TIME_LIMIT = 0
-LIVES = 0
+TIME_LIMIT = 30
+LIVES = 3
 TopBarHeight = 50
 LABEL_FONT = pygame.font.SysFont("comicsans", 24)
 
-invalid = True
-while invalid:
-    Difficulty = input("What difficulty do you want? (Easy(E), Normal(N), Hard(H)):").upper()
-    if Difficulty == "E":
-        TARGET_INCREMENT = 1500
-        invalid = False
-    elif Difficulty == "N":
-        TARGET_INCREMENT = 1000
-        invalid = False
-    elif Difficulty == "H":
-        TARGET_INCREMENT = 700
-        invalid = False
-    else:
-        print("Invalid difficulty. Please choose Easy (E), Normal (N), or Hard (H).")
-
-invalid = True
-while invalid:
-    Target_size = input("What target size do you want? (Small(S), Medium(M), Large(L)):").upper()
-    if Target_size == "S":
-        Size = 20
-        invalid = False
-    elif Target_size == "M":
-        Size = 30
-        invalid = False
-    elif Target_size == "L":
-        Size = 40
-        invalid = False
-    else:
-        print("Invalid target size. Please choose Small (S), Medium (M), or Large (L).")
 
 invalid = True
 while invalid:
     Mode = input("What mode do you want? (Timed(T) or Lives(L)):").upper()
     if Mode == "T":
-        TIME_LIMIT = int(input("How much time do you want(secs):"))
+        print("You have 30 seconds")
         invalid = False
     elif Mode == "L":
-        LIVES = int(input("How many lives do you want:"))
+        print("You have 3 lives")
         invalid = False
     else:
         print("Invalid mode. Please choose Timed (T) or Lives (L).")
@@ -246,5 +217,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
