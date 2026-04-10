@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AimForge — Global Leaderboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050a0f;
+    --bg2: #0a1420;
+    --bg3: #0f1e2e;
+    --accent: #00e5ff;
+    --accent2: #ff4444;
+    --accent3: #ffd700;
+    --text: #e0f4ff;
+    --muted: #4a7a99;
+    --border: rgba(0, 229, 255, 0.2);
+    --border-bright: rgba(0, 229, 255, 0.6);
+    --gold: #ffd700;
+    --silver: #c0c8d0;
+    --bronze: #cd7f32;
+    --glow: 0 0 20px rgba(0,229,255,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.04) 2px,
+      rgba(0,0,0,0.04) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Grid background */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    padding: 40px 0 0;
+    text-align: center;
+    position: relative;
+  }
+
+  .crosshair-icon {
+    display: inline-block;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  .crosshair-icon svg {
+    width: 64px;
+    height: 64px;
+    filter: drop-shadow(0 0 12px var(--accent));
+    animation: pulse-icon 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-icon {
+    0%, 100% { filter: drop-shadow(0 0 8px var(--accent)); }
+    50% { filter: drop-shadow(0 0 24px var(--accent)); }
+  }
+
+  h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(2rem, 5vw, 3.6rem);
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    line-height: 1;
+    margin-bottom: 6px;
+    background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--accent);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-bottom: 32px;
+  }
+
+  /* Live indicator */
+  .live-bar {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,229,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 40px;
+    letter-spacing: 0.1em;
+  }
+  .live-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #22dd66;
+    box-shadow: 0 0 6px #22dd66;
+    animation: blink 1.5s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  /* ─── STATS ROW ─── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    opacity: 0.5;
+  }
+
+  .stat-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+    text-shadow: 0 0 20px rgba(0,229,255,0.4);
+  }
+
+  .stat-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* ─── CONTROLS ─── */
+  .controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .filter-btn {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    padding: 8px 18px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.15s;
+    border-right: 1px solid var(--border);
+  }
+
+  .filter-btn:last-child { border-right: none; }
+
+  .filter-btn:hover { background: rgba(0,229,255,0.08); color: var(--text); }
+
+  .filter-btn.active {
+    background: rgba(0,229,255,0.15);
+    color: var(--accent);
+    text-shadow: 0 0 8px var(--accent);
+  }
+
+  .search-box {
+    flex: 1;
+    min-width: 180px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    padding: 8px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .search-box::placeholder { color: var(--muted); }
+  .search-box:focus { border-color: var(--border-bright); box-shadow: 0 0 12px rgba(0,229,255,0.1); }
+
+  /* ─── TABLE ─── */
+  .table-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+
+  .table-header {
+    display: grid;
+    grid-template-columns: 60px 1fr 140px 130px 130px 120px;
+    padding: 12px 20px;
+    background: rgba(0,229,255,0.05);
+    border-bottom: 1px solid var(--border);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 60px 1fr 140px 130px 130px 120px;
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(0,229,255,0.06);
+    align-items: center;
+    transition: background 0.15s;
+    animation: row-in 0.3s ease both;
+    cursor: default;
+  }
+
+  @keyframes row-in {
+    from { opacity: 0; transform: translateX(-10px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .row:last-child { border-bottom: none; }
+  .row:hover { background: rgba(0,229,255,0.04); }
+
+  .row.rank-1 { background: rgba(255,215,0,0.05); }
+  .row.rank-2 { background: rgba(192,200,208,0.04); }
+  .row.rank-3 { background: rgba(205,127,50,0.04); }
+
+  /* ─── RANK BADGE ─── */
+  .rank-badge {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+  }
+
+  .rank-badge.gold   { color: var(--gold);   border: 1px solid rgba(255,215,0,0.4);   background: rgba(255,215,0,0.1);   text-shadow: 0 0 10px var(--gold); }
+  .rank-badge.silver { color: var(--silver); border: 1px solid rgba(192,200,208,0.4); background: rgba(192,200,208,0.08); }
+  .rank-badge.bronze { color: var(--bronze); border: 1px solid rgba(205,127,50,0.4);  background: rgba(205,127,50,0.08); }
+  .rank-badge.normal { color: var(--muted);  border: 1px solid transparent; font-size: 0.75rem; }
+
+  /* ─── PLAYER NAME ─── */
+  .player-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .player-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent);
+    background: rgba(0,229,255,0.1);
+    border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 2px;
+    padding: 1px 6px;
+    letter-spacing: 0.1em;
+  }
+
+  .new-badge {
+    font-size: 0.6rem;
+    color: #22dd66;
+    background: rgba(34,221,102,0.1);
+    border: 1px solid rgba(34,221,102,0.3);
+    border-radius: 2px;
+    padding: 1px 5px;
+    font-family: 'Share Tech Mono', monospace;
+    letter-spacing: 0.1em;
+    animation: blink 2s ease infinite;
+  }
+
+  /* ─── SCORE ─── */
+  .score {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--accent);
+    text-shadow: 0 0 12px rgba(0,229,255,0.3);
+  }
+
+  /* ─── ACCURACY BAR ─── */
+  .accuracy-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .accuracy-val {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text);
+  }
+
+  .accuracy-bar-bg {
+    height: 4px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .accuracy-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent), #00ff88);
+    transition: width 0.8s ease;
+  }
+
+  /* ─── REACTION TIME ─── */
+  .reaction {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text);
+  }
+  .reaction.fast { color: #22dd66; }
+  .reaction.medium { color: var(--accent3); }
+  .reaction.slow { color: var(--muted); }
+
+  /* ─── DATE ─── */
+  .date-cell {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+
+  /* ─── API DOCS ─── */
+  .api-section {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 40px;
+  }
+
+  .api-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    background: rgba(0,229,255,0.05);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .api-header-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+  }
+
+  .api-toggle {
+    margin-left: auto;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .api-body {
+    padding: 24px;
+    display: none;
+  }
+  .api-body.open { display: block; }
+
+  .endpoint {
+    margin-bottom: 28px;
+  }
+
+  .endpoint:last-child { margin-bottom: 0; }
+
+  .ep-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .method {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 3px;
+    letter-spacing: 0.1em;
+  }
+  .method.get  { background: rgba(0,229,255,0.15); color: var(--accent); border: 1px solid rgba(0,229,255,0.3); }
+  .method.post { background: rgba(34,221,102,0.12); color: #22dd66; border: 1px solid rgba(34,221,102,0.3); }
+  .method.del  { background: rgba(255,68,68,0.12); color: var(--accent2); border: 1px solid rgba(255,68,68,0.3); }
+
+  .ep-path {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+
+  .ep-desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+
+  pre {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: #88ccee;
+    overflow-x: auto;
+    line-height: 1.7;
+  }
+
+  pre .key { color: var(--accent); }
+  pre .str { color: #88dd88; }
+  pre .num { color: var(--accent3); }
+  pre .comment { color: var(--muted); font-style: italic; }
+
+  .ep-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
+  }
+
+  /* ─── EMPTY STATE ─── */
+  .empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--muted);
+  }
+  .empty-state .big { font-size: 3rem; margin-bottom: 12px; opacity: 0.3; }
+  .empty-state p { font-family: 'Share Tech Mono', monospace; font-size: 0.8rem; letter-spacing: 0.1em; }
+
+  /* ─── TOAST ─── */
+  #toast {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    background: var(--bg3);
+    border: 1px solid var(--border-bright);
+    border-radius: 6px;
+    padding: 12px 20px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--accent);
+    z-index: 10000;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.25s ease;
+    box-shadow: var(--glow);
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+
+  /* ─── FOOTER ─── */
+  footer {
+    text-align: center;
+    padding: 32px 0 48px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    opacity: 0.5;
+  }
+
+  @media (max-width: 720px) {
+    .table-header, .row {
+      grid-template-columns: 48px 1fr 110px 90px;
+    }
+    .table-header .col-reaction,
+    .row .col-reaction,
+    .table-header .col-date,
+    .row .col-date { display: none; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .stats-row .stat-card:last-child { grid-column: 1 / -1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <div class="crosshair-icon">
+      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="32" cy="32" r="20" stroke="#00e5ff" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <circle cx="32" cy="32" r="10" stroke="#00e5ff" stroke-width="1.5"/>
+        <circle cx="32" cy="32" r="2.5" fill="#00e5ff"/>
+        <line x1="32" y1="4" x2="32" y2="18" stroke="#00e5ff" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="32" y1="46" x2="32" y2="60" stroke="#00e5ff" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="4" y1="32" x2="18" y2="32" stroke="#00e5ff" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="46" y1="32" x2="60" y2="32" stroke="#00e5ff" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <h1>AIMFORGE</h1>
+    <div class="subtitle">Global Leaderboard System</div>
+    <div class="live-bar">
+      <span class="live-dot"></span>
+      <span id="last-updated">updated just now</span>
+    </div>
+  </header>
+
+  <!-- Stats row -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <span class="stat-value" id="stat-total">0</span>
+      <span class="stat-label">Total Players</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value" id="stat-top">—</span>
+      <span class="stat-label">Top Score</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value" id="stat-avg">—</span>
+      <span class="stat-label">Avg Accuracy</span>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="filter-group" id="limit-group">
+      <button class="filter-btn active" data-limit="5">5</button>
+      <button class="filter-btn" data-limit="10">10</button>
+      <button class="filter-btn" data-limit="25">25</button>
+      <button class="filter-btn" data-limit="50">50</button>
+    </div>
+
+    <div class="filter-group" id="mode-group">
+      <button class="filter-btn active" data-mode="all">All Modes</button>
+      <button class="filter-btn" data-mode="timed">Timed</button>
+      <button class="filter-btn" data-mode="lives">Lives</button>
+    </div>
+
+    <input type="text" class="search-box" placeholder="Search player..." id="search-input">
+  </div>
+
+  <!-- Leaderboard table -->
+  <div class="table-wrap">
+    <div class="table-header">
+      <div>Rank</div>
+      <div>Player</div>
+      <div>Score</div>
+      <div>Accuracy</div>
+      <div class="col-reaction">Reaction</div>
+      <div class="col-date">Date</div>
+    </div>
+    <div id="leaderboard-body">
+      <!-- rows injected by JS -->
+    </div>
+  </div>
+
+  <!-- API Docs section -->
+  <div class="api-section">
+    <div class="api-header" id="api-toggle-btn">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="2" stroke="#00e5ff" stroke-width="1.2"/><path d="M5 6l-2 2 2 2" stroke="#00e5ff" stroke-width="1.2" stroke-linecap="round"/><path d="M11 6l2 2-2 2" stroke="#00e5ff" stroke-width="1.2" stroke-linecap="round"/><line x1="9" y1="5.5" x2="7" y2="10.5" stroke="#00e5ff" stroke-width="1.2" stroke-linecap="round"/></svg>
+      <span class="api-header-title">REST API Reference</span>
+      <span class="api-toggle" id="api-toggle-label">[ show ]</span>
+    </div>
+    <div class="api-body" id="api-body">
+
+      <div class="endpoint">
+        <div class="ep-row">
+          <span class="method get">GET</span>
+          <span class="ep-path">/api/leaderboard?limit=50&offset=0</span>
+        </div>
+        <p class="ep-desc">Retrieve the leaderboard. Optional query params: <code>limit</code> (default 50) and <code>offset</code> (default 0).</p>
+        <pre><span class="comment">// Response 200 OK</span>
+{
+  <span class="key">"status"</span>: <span class="str">"ok"</span>,
+  <span class="key">"total"</span>: <span class="num">142</span>,
+  <span class="key">"entries"</span>: [
+    {
+      <span class="key">"id"</span>: <span class="str">"uuid-string"</span>,
+      <span class="key">"player"</span>: <span class="str">"xX_Sniper_Xx"</span>,
+      <span class="key">"score"</span>: <span class="num">98420</span>,
+      <span class="key">"accuracy"</span>: <span class="num">94.7</span>,
+      <span class="key">"reaction_ms"</span>: <span class="num">187</span>,
+      <span class="key">"mode"</span>: <span class="str">"timed"</span>,
+      <span class="key">"timestamp"</span>: <span class="str">"2025-04-10T14:32:00Z"</span>
+    }
+  ]
+}</pre>
+      </div>
+
+      <hr class="ep-divider">
+
+      <div class="endpoint">
+        <div class="ep-row">
+          <span class="method post">POST</span>
+          <span class="ep-path">/api/leaderboard</span>
+        </div>
+        <p class="ep-desc">Submit a new score from your Python aim trainer. All fields except <code>mode</code> are required.</p>
+        <pre><span class="comment">// Request body (JSON)</span>
+{
+  <span class="key">"player"</span>:      <span class="str">"xX_Sniper_Xx"</span>,
+  <span class="key">"score"</span>:       <span class="num">98420</span>,
+  <span class="key">"accuracy"</span>:    <span class="num">94.7</span>,      <span class="comment">// 0–100 float</span>
+  <span class="key">"reaction_ms"</span>: <span class="num">187</span>,        <span class="comment">// avg ms per hit</span>
+  <span class="key">"mode"</span>:        <span class="str">"timed"</span>      <span class="comment">// optional tag: timed or lives</span>
+}
+
+<span class="comment">// Response 201 Created</span>
+{
+  <span class="key">"status"</span>: <span class="str">"ok"</span>,
+  <span class="key">"id"</span>: <span class="str">"new-uuid"</span>,
+  <span class="key">"rank"</span>: <span class="num">3</span>
+}</pre>
+      </div>
+
+      <hr class="ep-divider">
+
+      <div class="endpoint">
+        <div class="ep-row">
+          <span class="method get">GET</span>
+          <span class="ep-path">/api/leaderboard/:id</span>
+        </div>
+        <p class="ep-desc">Get a single entry by its ID.</p>
+      </div>
+
+      <hr class="ep-divider">
+
+      <div class="endpoint">
+        <div class="ep-row">
+          <span class="method del">DELETE</span>
+          <span class="ep-path">/api/leaderboard/:id</span>
+        </div>
+        <p class="ep-desc">Remove an entry. In production, secure this with an admin API key in the <code>X-API-Key</code> header.</p>
+      </div>
+
+      <hr class="ep-divider">
+
+      <div class="endpoint">
+        <p class="ep-desc" style="color: var(--text); font-size:0.85rem; margin-bottom: 10px;">Python example — submitting a score after a game session:</p>
+        <pre><span class="comment"># pip install requests</span>
+import requests
+
+LEADERBOARD_URL = <span class="str">"https://your-domain.com/api/leaderboard"</span>
+
+def submit_score(player, score, accuracy, reaction_ms, mode=<span class="str">"timed"</span>):
+    payload = {
+        <span class="str">"player"</span>: player,
+        <span class="str">"score"</span>: score,
+        <span class="str">"accuracy"</span>: round(accuracy, <span class="num">2</span>),
+        <span class="str">"reaction_ms"</span>: int(reaction_ms),
+        <span class="str">"mode"</span>: mode,
+    }
+    res = requests.post(LEADERBOARD_URL, json=payload, timeout=<span class="num">5</span>)
+    res.raise_for_status()
+    data = res.json()
+    print(f<span class="str">"Score submitted! You ranked #{data['rank']}"</span>)
+    return data</pre>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>AIMFORGE LEADERBOARD — CONNECT YOUR PYTHON CLIENT VIA REST API ABOVE</footer>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─── DATA STORE (localStorage — replace with real API calls in production)
+const STORAGE_KEY = 'aimforge_leaderboard_v1';
+
+function getEntries() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  } catch { return []; }
+}
+
+function saveEntries(entries) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+}
+
+function uuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
+// Seed some demo data if empty
+function seedDemoData() {
+  const players = [
+    ['xX_Sniper_Xx', 98420, 94.7, 172],
+    ['NightOwl', 87310, 91.2, 198],
+    ['Reticle_Fury', 84920, 89.5, 205],
+    ['QuickDraw99', 81200, 88.1, 213],
+    ['CrystalAim', 77500, 86.4, 228],
+    ['Phantom_v2', 74100, 84.9, 241],
+    ['PixelHunter', 68800, 82.3, 257],
+    ['ZeroLatency', 65200, 80.7, 269],
+    ['AimBot404', 61400, 79.1, 284],
+    ['Flicker_gg', 58900, 77.8, 299],
+    ['DotSight', 54300, 75.2, 318],
+    ['TacticalEye', 50100, 73.5, 334],
+  ];
+
+  const now = Date.now();
+  const entries = players.map(([player, score, accuracy, reaction_ms], i) => ({
+    id: uuid(),
+    player,
+    score,
+    accuracy,
+    reaction_ms,
+    mode: ['timed','lives'][i % 2],
+    timestamp: new Date(now - (i * 3600000 * 8)).toISOString(),
+  }));
+  saveEntries(entries);
+}
+
+if (getEntries().length === 0) seedDemoData();
+
+// ─── FAKE REST API (intercepts fetch() calls to /api/*)
+const _fetch = window.fetch.bind(window);
+window.fetch = async function(url, opts = {}) {
+  if (typeof url !== 'string' || !url.startsWith('/api/')) {
+    return _fetch(url, opts);
+  }
+
+  const method = (opts.method || 'GET').toUpperCase();
+  const path = url.split('?')[0];
+  const parts = path.replace('/api/leaderboard', '').split('/').filter(Boolean);
+  const params = new URLSearchParams(url.includes('?') ? url.split('?')[1] : '');
+
+  await new Promise(r => setTimeout(r, 60)); // simulate latency
+
+  // GET /api/leaderboard
+  if (method === 'GET' && parts.length === 0) {
+    let entries = getEntries();
+    const period = params.get('period') || 'all';
+    const now = Date.now();
+    if (period === 'today') {
+      entries = entries.filter(e => now - new Date(e.timestamp) < 86400000);
+    } else if (period === 'week') {
+      entries = entries.filter(e => now - new Date(e.timestamp) < 604800000);
+    }
+    entries.sort((a, b) => b.score - a.score);
+    const limit = parseInt(params.get('limit') || '50');
+    const offset = parseInt(params.get('offset') || '0');
+    return new Response(JSON.stringify({ status: 'ok', total: entries.length, entries: entries.slice(offset, offset + limit) }), { status: 200, headers: {'Content-Type': 'application/json'} });
+  }
+
+  // POST /api/leaderboard
+  if (method === 'POST' && parts.length === 0) {
+    let body;
+    try { body = JSON.parse(opts.body); } catch { return new Response(JSON.stringify({ status: 'error', message: 'invalid json' }), { status: 400 }); }
+    const { player, score, accuracy, reaction_ms, mode } = body;
+    if (!player || score == null || accuracy == null || reaction_ms == null) {
+      return new Response(JSON.stringify({ status: 'error', message: 'missing required fields' }), { status: 400 });
+    }
+    const entry = { id: uuid(), player: String(player).slice(0, 32), score: Number(score), accuracy: Math.min(100, Math.max(0, Number(accuracy))), reaction_ms: Number(reaction_ms), mode: mode || 'standard', timestamp: new Date().toISOString() };
+    const entries = getEntries();
+    entries.push(entry);
+    entries.sort((a, b) => b.score - a.score);
+    saveEntries(entries);
+    const rank = entries.findIndex(e => e.id === entry.id) + 1;
+    renderLeaderboard();
+    updateStats();
+    showToast(`New score from ${player} — Rank #${rank}!`);
+    return new Response(JSON.stringify({ status: 'ok', id: entry.id, rank }), { status: 201, headers: {'Content-Type': 'application/json'} });
+  }
+
+  // GET /api/leaderboard/:id
+  if (method === 'GET' && parts.length === 1) {
+    const entry = getEntries().find(e => e.id === parts[0]);
+    if (!entry) return new Response(JSON.stringify({ status: 'error', message: 'not found' }), { status: 404 });
+    return new Response(JSON.stringify({ status: 'ok', entry }), { status: 200, headers: {'Content-Type': 'application/json'} });
+  }
+
+  // DELETE /api/leaderboard/:id
+  if (method === 'DELETE' && parts.length === 1) {
+    let entries = getEntries();
+    const before = entries.length;
+    entries = entries.filter(e => e.id !== parts[0]);
+    if (entries.length === before) return new Response(JSON.stringify({ status: 'error', message: 'not found' }), { status: 404 });
+    saveEntries(entries);
+    renderLeaderboard();
+    updateStats();
+    return new Response(JSON.stringify({ status: 'ok' }), { status: 200 });
+  }
+
+  return new Response(JSON.stringify({ status: 'error', message: 'not found' }), { status: 404 });
+};
+
+// ─── RENDER
+function formatReaction(ms) {
+  if (ms < 200) return { cls: 'fast', txt: `${ms}ms ⚡` };
+  if (ms < 280) return { cls: 'medium', txt: `${ms}ms` };
+  return { cls: 'slow', txt: `${ms}ms` };
+}
+
+function rankClass(i) {
+  if (i === 0) return 'rank-1';
+  if (i === 1) return 'rank-2';
+  if (i === 2) return 'rank-3';
+  return '';
+}
+
+function badgeClass(i) {
+  if (i === 0) return 'gold';
+  if (i === 1) return 'silver';
+  if (i === 2) return 'bronze';
+  return 'normal';
+}
+
+function timeAgo(ts) {
+  const diff = (Date.now() - new Date(ts)) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+  return `${Math.floor(diff/86400)}d ago`;
+}
+
+function isNew(ts) {
+  return (Date.now() - new Date(ts)) < 300000; // 5 min
+}
+
+let currentSearch = '';
+let currentLimit = 5;
+let currentMode = 'all';
+
+async function renderLeaderboard() {
+  const res = await fetch(`/api/leaderboard?limit=100`);
+  const data = await res.json();
+  let entries = data.entries;
+
+  if (currentMode !== 'all') {
+    entries = entries.filter(e => (e.mode || '').toLowerCase() === currentMode);
+  }
+
+  if (currentSearch) {
+    const q = currentSearch.toLowerCase();
+    entries = entries.filter(e => e.player.toLowerCase().includes(q));
+  }
+
+  entries = entries.slice(0, currentLimit);
+
+  const body = document.getElementById('leaderboard-body');
+
+  if (entries.length === 0) {
+    body.innerHTML = `<div class="empty-state"><div class="big">⊕</div><p>No entries found — submit a score via the API</p></div>`;
+    return;
+  }
+
+  body.innerHTML = entries.map((e, i) => {
+    const react = formatReaction(e.reaction_ms);
+    const rankNum = i + 1;
+    const barWidth = Math.round(e.accuracy);
+    const newEntry = isNew(e.timestamp);
+    return `<div class="row ${rankClass(i)}" style="animation-delay:${i * 30}ms">
+      <div><div class="rank-badge ${badgeClass(i)}">${rankNum}</div></div>
+      <div class="player-name">
+        ${e.player}
+        ${e.mode ? `<span class="player-tag">${e.mode}</span>` : ''}
+        ${newEntry ? '<span class="new-badge">NEW</span>' : ''}
+      </div>
+      <div class="score">${e.score.toLocaleString()}</div>
+      <div class="accuracy-wrap">
+        <span class="accuracy-val">${e.accuracy.toFixed(1)}%</span>
+        <div class="accuracy-bar-bg"><div class="accuracy-bar-fill" style="width:${barWidth}%"></div></div>
+      </div>
+      <div class="col-reaction"><span class="reaction ${react.cls}">${react.txt}</span></div>
+      <div class="col-date date-cell">${timeAgo(e.timestamp)}</div>
+    </div>`;
+  }).join('');
+}
+
+async function updateStats() {
+  const res = await fetch(`/api/leaderboard?limit=1000&period=${currentFilter}`);
+  const data = await res.json();
+  let entries = data.entries;
+
+  if (currentMode !== 'all') {
+    entries = entries.filter(e => (e.mode || '').toLowerCase() === currentMode);
+  }
+
+  document.getElementById('stat-total').textContent = entries.length;
+  if (entries.length > 0) {
+    document.getElementById('stat-top').textContent = entries[0].score.toLocaleString();
+    const avgAcc = entries.reduce((s, e) => s + e.accuracy, 0) / entries.length;
+    document.getElementById('stat-avg').textContent = avgAcc.toFixed(1) + '%';
+  } else {
+    document.getElementById('stat-top').textContent = '—';
+    document.getElementById('stat-avg').textContent = '—';
+  }
+
+}
+
+// ─── TOAST
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ─── CONTROLS
+document.querySelectorAll('[data-filter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    renderLeaderboard();
+    updateStats();
+  });
+});
+
+document.querySelectorAll('[data-limit]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-limit]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentLimit = Number(btn.dataset.limit);
+    renderLeaderboard();
+  });
+});
+
+document.querySelectorAll('[data-mode]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-mode]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMode = btn.dataset.mode;
+    renderLeaderboard();
+    updateStats();
+  });
+});
+
+let searchTimer;
+document.getElementById('search-input').addEventListener('input', e => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    currentSearch = e.target.value.trim();
+    renderLeaderboard();
+  }, 200);
+});
+
+// ─── API DOCS TOGGLE
+document.getElementById('api-toggle-btn').addEventListener('click', () => {
+  const body = document.getElementById('api-body');
+  const label = document.getElementById('api-toggle-label');
+  body.classList.toggle('open');
+  label.textContent = body.classList.contains('open') ? '[ hide ]' : '[ show ]';
+});
+
+// ─── INIT
+renderLeaderboard();
+updateStats();
+
+// Live clock refresh
+setInterval(() => {
+  document.getElementById('last-updated').textContent = 'updated ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  renderLeaderboard();
+}, 30000);
+</script>
+</body>
+</html>
