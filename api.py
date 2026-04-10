@@ -14,10 +14,11 @@ try:
         port="5432"
     )
     cursor = conn.cursor()
-except:
+    
+except Exception as e:
     conn = None
     cursor = None
-    print("Database not connected")
+    print("Database not connected:",e)
 
 class Score(BaseModel):
     username: str
