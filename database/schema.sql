@@ -26,4 +26,4 @@ CREATE TABLE game_results (
 CREATE INDEX idx_game_results_user_id ON game_results(user_id);
 CREATE INDEX idx_game_results_mode_id ON game_results(mode_id);
 CREATE INDEX idx_game_results_played_at ON game_results(played_at);
-CREATE INDEX idx_game_results_mode_hits ON game_results(mode_id, hits DESC);
+CREATE INDEX idx_game_results_mode_rank ON game_results(mode_id, hits DESC, accuracy DESC, misses ASC);
