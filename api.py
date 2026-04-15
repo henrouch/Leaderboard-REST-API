@@ -77,4 +77,38 @@ def post_score(score: Score):
     return {"message": "Score saved"}
 
 
+@app.get("/leaderboard")
+def get_leaderboard():
+    if not cursor:
+        return [{"message": "No database yet"}]
+
+    cursor.execute("""
+        SELECT
+            u.username,
+            g.hits,
+            g.misses,
+            g.accuracy,
+            g.played_at,
+            m.name AS mode
+        FROM game_results g
+        JOIN users u ON g.user_id = u.id
+        JOIN game_modes m ON g.mode_id = m.id
+        ORDER BY g.accuracy DESC, g.hits DESC
+    """)
+
+    rows = cursor.fetchall()
+    return [
+        {
+            "username": row[0],
+            "hits":     row[1],
+            "misses":   row[2],
+            "accuracy": float(row[3]),
+            "played_at": row[4].isoformat() if row[4] else None,
+            "mode":     row[5],
+        }
+        for row in rows
+    ]
+
+
+
 
