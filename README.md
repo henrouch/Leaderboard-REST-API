@@ -72,6 +72,8 @@ The API includes basic JWT authentication:
 
 Score submission now requires a logged-in session. The desktop game and player portal both use JWT authentication before saving scores.
 
+The desktop game now handles login/register inside the game window, and it stores the session locally so you do not need to sign in every time.
+
 Set `JWT_SECRET` in your local `.env` before using auth in anything beyond development.
 
 ## Database files
