@@ -40,7 +40,9 @@ Available services:
 
 - API: http://localhost:8000
 - Health check: http://localhost:8000/health
-- PostgreSQL: localhost:5432
+- Frontend: http://localhost:8080
+- Player Portal (login/register + my scores): http://localhost:8080/auth.html
+- PostgreSQL: internal to Docker network (`db:5432`)
 
 Container startup behavior:
 
@@ -67,6 +69,8 @@ The API includes basic JWT authentication:
 - `POST /auth/login`
 - `GET /auth/me`
 - `PUT /player/{username}`
+
+Score submission now requires a logged-in session. The desktop game and player portal both use JWT authentication before saving scores.
 
 Set `JWT_SECRET` in your local `.env` before using auth in anything beyond development.
 

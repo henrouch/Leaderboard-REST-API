@@ -257,6 +257,24 @@
     box-shadow: 0 0 12px rgba(0,229,255,0.1);
   }
 
+  .auth-link {
+    text-decoration: none;
+    color: var(--accent);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 14px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .auth-link:hover {
+    background: rgba(0,229,255,0.12);
+    border-color: var(--border-bright);
+  }
+
   .table-wrap {
     background: var(--bg2);
     border: 1px solid var(--border);
@@ -267,7 +285,7 @@
 
   .table-header {
     display: grid;
-    grid-template-columns: 60px 1fr 140px 130px 130px 120px;
+    grid-template-columns: 60px 1fr 110px 110px 110px 130px 120px;
     padding: 12px 20px;
     background: rgba(0,229,255,0.05);
     border-bottom: 1px solid var(--border);
@@ -280,7 +298,7 @@
 
   .row {
     display: grid;
-    grid-template-columns: 60px 1fr 140px 130px 130px 120px;
+    grid-template-columns: 60px 1fr 110px 110px 110px 130px 120px;
     padding: 14px 20px;
     border-bottom: 1px solid rgba(0,229,255,0.06);
     align-items: center;
@@ -594,11 +612,11 @@
 
   @media (max-width: 720px) {
     .table-header, .row {
-      grid-template-columns: 48px 1fr 110px 90px;
+      grid-template-columns: 48px 1fr 100px 90px;
     }
 
-    .table-header .col-reaction,
-    .row .col-reaction,
+    .table-header .col-misses,
+    .row .col-misses,
     .table-header .col-date,
     .row .col-date {
       display: none;
@@ -667,6 +685,15 @@
       <button class="filter-btn" data-mode="lives">Lives</button>
     </div>
 
+    <div class="filter-group" id="sort-group">
+      <button class="filter-btn active" data-sort="score">By Score</button>
+      <button class="filter-btn" data-sort="accuracy">By Accuracy</button>
+      <button class="filter-btn" data-sort="hits">By Hits</button>
+      <button class="filter-btn" data-sort="date">By Date</button>
+    </div>
+
+    <a class="auth-link" href="auth.html">Player Login / Register</a>
+
     <input type="text" class="search-box" placeholder="Search player..." id="search-input">
   </div>
 
@@ -675,138 +702,38 @@
       <div>Rank</div>
       <div>Player</div>
       <div>Hits</div>
-      <div>Misses</div>
+      <div class="col-misses">Misses</div>
+      <div>Score</div>
       <div>Accuracy</div>
       <div class="col-date">Date</div>
     </div>
     <div id="leaderboard-body"></div>
   </div>
-
-  <div class="api-section">
-    <div class="api-header" id="api-toggle-btn">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <rect x="1" y="3" width="14" height="10" rx="2" stroke="#00e5ff" stroke-width="1.2"/>
-        <path d="M5 6l-2 2 2 2" stroke="#00e5ff" stroke-width="1.2" stroke-linecap="round"/>
-        <path d="M11 6l2 2-2 2" stroke="#00e5ff" stroke-width="1.2" stroke-linecap="round"/>
-        <line x1="9" y1="5.5" x2="7" y2="10.5" stroke="#00e5ff" stroke-width="1.2" stroke-linecap="round"/>
-      </svg>
-      <span class="api-header-title">REST API Reference</span>
-      <span class="api-toggle" id="api-toggle-label">[ show ]</span>
-    </div>
-    <div class="api-body" id="api-body">
-
-      <div class="endpoint">
-        <div class="ep-row">
-          <span class="method get">GET</span>
-          <span class="ep-path">/api/leaderboard?limit=50&offset=0</span>
-        </div>
-        <p class="ep-desc">Retrieve the leaderboard. Optional query params: <code>limit</code> (default 50) and <code>offset</code> (default 0).</p>
-        <pre><span class="comment">// Response 200 OK</span>
-{
-  <span class="key">"status"</span>: <span class="str">"ok"</span>,
-  <span class="key">"total"</span>: <span class="num">142</span>,
-  <span class="key">"entries"</span>: [
-    {
-      <span class="key">"id"</span>: <span class="str">"uuid-string"</span>,
-      <span class="key">"player"</span>: <span class="str">"xX_Sniper_Xx"</span>,
-      <span class="key">"score"</span>: <span class="num">98420</span>,
-      <span class="key">"accuracy"</span>: <span class="num">94.7</span>,
-      <span class="key">"reaction_ms"</span>: <span class="num">187</span>,
-      <span class="key">"mode"</span>: <span class="str">"timed"</span>,
-      <span class="key">"timestamp"</span>: <span class="str">"2025-04-10T14:32:00Z"</span>
-    }
-  ]
-}</pre>
-      </div>
-
-      <hr class="ep-divider">
-
-      <div class="endpoint">
-        <div class="ep-row">
-          <span class="method post">POST</span>
-          <span class="ep-path">/api/leaderboard</span>
-        </div>
-        <p class="ep-desc">Submit a new score from your Python aim trainer. All fields except <code>mode</code> are required.</p>
-        <pre><span class="comment">// Request body (JSON)</span>
-{
-  <span class="key">"player"</span>:      <span class="str">"xX_Sniper_Xx"</span>,
-  <span class="key">"score"</span>:       <span class="num">98420</span>,
-  <span class="key">"accuracy"</span>:    <span class="num">94.7</span>,      <span class="comment">// 0–100 float</span>
-  <span class="key">"reaction_ms"</span>: <span class="num">187</span>,        <span class="comment">// avg ms per hit</span>
-  <span class="key">"mode"</span>:        <span class="str">"timed"</span>      <span class="comment">// optional tag: timed or lives</span>
-}
-
-<span class="comment">// Response 201 Created</span>
-{
-  <span class="key">"status"</span>: <span class="str">"ok"</span>,
-  <span class="key">"id"</span>: <span class="str">"new-uuid"</span>,
-  <span class="key">"rank"</span>: <span class="num">3</span>
-}</pre>
-      </div>
-
-      <hr class="ep-divider">
-
-      <div class="endpoint">
-        <div class="ep-row">
-          <span class="method get">GET</span>
-          <span class="ep-path">/api/leaderboard/:id</span>
-        </div>
-        <p class="ep-desc">Get a single entry by its ID.</p>
-      </div>
-
-      <hr class="ep-divider">
-
-      <div class="endpoint">
-        <div class="ep-row">
-          <span class="method del">DELETE</span>
-          <span class="ep-path">/api/leaderboard/:id</span>
-        </div>
-        <p class="ep-desc">Remove an entry. In production, secure this with an admin API key in the <code>X-API-Key</code> header.</p>
-      </div>
-
-      <hr class="ep-divider">
-
-      <div class="endpoint">
-        <p class="ep-desc" style="color: var(--text); font-size:0.85rem; margin-bottom: 10px;">Python example — submitting a score after a game session:</p>
-        <pre><span class="comment"># pip install requests</span>
-import requests
-
-LEADERBOARD_URL = <span class="str">"https://your-domain.com/api/leaderboard"</span>
-
-def submit_score(player, score, accuracy, reaction_ms, mode=<span class="str">"timed"</span>):
-    payload = {
-        <span class="str">"player"</span>: player,
-        <span class="str">"score"</span>: score,
-        <span class="str">"accuracy"</span>: round(accuracy, <span class="num">2</span>),
-        <span class="str">"reaction_ms"</span>: int(reaction_ms),
-        <span class="str">"mode"</span>: mode,
-    }
-    res = requests.post(LEADERBOARD_URL, json=payload, timeout=<span class="num">5</span>)
-    res.raise_for_status()
-    data = res.json()
-    print(f<span class="str">"Score submitted! You ranked #{data['rank']}"</span>)
-    return data</pre>
-      </div>
-
-    </div>
-  </div>
-
-  <footer>AIMFORGE LEADERBOARD — CONNECT YOUR PYTHON CLIENT VIA REST API ABOVE</footer>
+  <footer>AIMFORGE LEADERBOARD — SIGN IN TO TRACK YOUR PERSONAL MATCH HISTORY</footer>
 </div>
 
 <div id="toast"></div>
 
 <script>
-const API_BASE = 'http://127.0.0.1:8000';
+const API_BASE = `${window.location.protocol}//${window.location.hostname || '127.0.0.1'}:8000`;
 
 let currentSearch = '';
 let currentLimit = 5;
 let currentMode = 'all';
-let currentFilter = 'all';
-let currentSort = 'accuracy';
+let currentSort = 'score';
 
 async function fetchLeaderboard() {
-  const res = await fetch(`${API_BASE}/leaderboard`);
+  const params = new URLSearchParams({
+    limit: '100',
+    offset: '0',
+    sort_by: currentSort,
+  });
+
+  if (currentMode !== 'all') {
+    params.set('mode', currentMode);
+  }
+
+  const res = await fetch(`${API_BASE}/leaderboard?${params.toString()}`);
   if (!res.ok) throw new Error('API error: ' + res.status);
   return await res.json();
 }
@@ -815,22 +742,17 @@ function applyFilters(entries) {
   entries = entries.map(e => ({
     player: e.username,
     hits: e.hits,
+    misses: e.misses,
+    score: e.score,
     accuracy: parseFloat(e.accuracy),
     mode: (e.mode || '').toLowerCase(),
     timestamp: e.played_at,
-    misses: e.misses,
   }));
-
-  if (currentMode !== 'all') {
-    entries = entries.filter(e => e.mode === currentMode);
-  }
 
   if (currentSearch) {
     const q = currentSearch.toLowerCase();
     entries = entries.filter(e => e.player.toLowerCase().includes(q));
   }
-
-  entries.sort((a, b) => b.accuracy - a.accuracy || b.hits - a.hits);
 
   return entries;
 }
@@ -886,7 +808,7 @@ async function renderLeaderboard() {
   entries = entries.slice(0, currentLimit);
 
   if (entries.length === 0) {
-    body.innerHTML = `<div class="empty-state"><div class="big">⊕</div><p>No entries found — play a game to submit a score!</p></div>`;
+    body.innerHTML = '<div class="empty-state"><div class="big">⊕</div><p>No entries found — play a game to submit a score!</p></div>';
     return;
   }
 
@@ -902,7 +824,8 @@ async function renderLeaderboard() {
         ${newEntry ? '<span class="new-badge">NEW</span>' : ''}
       </div>
       <div class="score">${e.hits}</div>
-      <div class="score">${e.misses}</div>
+      <div class="score col-misses">${e.misses}</div>
+      <div class="score">${e.score}</div>
       <div class="accuracy-wrap">
         <span class="accuracy-val">${e.accuracy.toFixed(1)}%</span>
         <div class="accuracy-bar-bg"><div class="accuracy-bar-fill" style="width:${barWidth}%"></div></div>
@@ -934,23 +857,6 @@ async function updateStats() {
   }
 }
 
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3500);
-}
-
-document.querySelectorAll('[data-filter]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentFilter = btn.dataset.filter;
-    renderLeaderboard();
-    updateStats();
-  });
-});
-
 document.querySelectorAll('[data-limit]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('[data-limit]').forEach(b => b.classList.remove('active'));
@@ -976,6 +882,7 @@ document.querySelectorAll('[data-sort]').forEach(btn => {
     btn.classList.add('active');
     currentSort = btn.dataset.sort;
     renderLeaderboard();
+    updateStats();
   });
 });
 
@@ -986,13 +893,6 @@ document.getElementById('search-input').addEventListener('input', e => {
     currentSearch = e.target.value.trim();
     renderLeaderboard();
   }, 200);
-});
-
-document.getElementById('api-toggle-btn').addEventListener('click', () => {
-  const body = document.getElementById('api-body');
-  const label = document.getElementById('api-toggle-label');
-  body.classList.toggle('open');
-  label.textContent = body.classList.contains('open') ? '[ hide ]' : '[ show ]';
 });
 
 renderLeaderboard();

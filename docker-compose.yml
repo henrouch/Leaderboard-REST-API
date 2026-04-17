@@ -6,8 +6,6 @@ services:
       POSTGRES_DB: leaderboard_db
       POSTGRES_USER: username
       POSTGRES_PASSWORD: password
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -40,6 +38,19 @@ services:
       DB_WAIT_INTERVAL_SECONDS: 1
     ports:
       - "8000:8000"
+    restart: unless-stopped
+
+  frontend:
+    image: nginx:alpine
+    container_name: leaderboard-frontend
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "8080:80"
+    volumes:
+      - ./site:/usr/share/nginx/html:ro
+      - ./site/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     restart: unless-stopped
 
 volumes:

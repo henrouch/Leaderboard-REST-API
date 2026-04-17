@@ -93,7 +93,17 @@ def update_player_route(
 
 
 @router.post("/scores", status_code=status.HTTP_201_CREATED)
-def post_score(score: ScoreIn) -> dict[str, int | str]:
+def post_score(
+    score: ScoreIn,
+    current_username: str = Depends(get_current_username),
+) -> dict[str, int | str]:
+    if current_username != score.username:
+        from fastapi import HTTPException
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Token does not match score username.",
+        )
     return store_score(score)
 
 

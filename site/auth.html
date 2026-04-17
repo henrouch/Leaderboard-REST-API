@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AimForge - Player Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050a0f;
+    --bg2: #0a1420;
+    --accent: #00e5ff;
+    --text: #e0f4ff;
+    --muted: #4a7a99;
+    --border: rgba(0, 229, 255, 0.2);
+    --border-bright: rgba(0, 229, 255, 0.6);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(circle at 10% 20%, #0b1b2a 0%, var(--bg) 50%);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    padding: 24px;
+  }
+
+  .container { max-width: 980px; margin: 0 auto; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; }
+
+  h1 {
+    margin: 0;
+    font-family: 'Orbitron', monospace;
+    letter-spacing: 0.08em;
+    font-size: clamp(1.4rem, 2.2vw, 2rem);
+  }
+
+  .nav-link {
+    text-decoration: none;
+    color: var(--accent);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+
+  .card h2 {
+    margin: 0 0 10px;
+    font-family: 'Share Tech Mono', monospace;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    font-size: 0.95rem;
+    text-transform: uppercase;
+  }
+
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  label { color: var(--muted); font-size: 0.84rem; }
+
+  input {
+    background: #07111b;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  button {
+    background: rgba(0,229,255,0.16);
+    border: 1px solid var(--border-bright);
+    color: var(--accent);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-family: 'Share Tech Mono', monospace;
+    cursor: pointer;
+  }
+
+  button:hover { background: rgba(0,229,255,0.24); }
+  .secondary { background: transparent; border-color: var(--border); color: var(--text); }
+
+  .status {
+    min-height: 20px;
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 8px;
+  }
+
+  .profile {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .profile strong { color: var(--accent); font-family: 'Share Tech Mono', monospace; }
+
+  .scores-header,
+  .score-row {
+    display: grid;
+    grid-template-columns: 1.2fr .8fr .8fr .8fr 1fr 1.2fr;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .scores-header {
+    color: var(--muted);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+
+  .scores-body { margin-top: 8px; }
+
+  .score-row {
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    padding: 10px 0;
+    font-size: 0.92rem;
+  }
+
+  .empty {
+    color: var(--muted);
+    padding: 16px 0;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.82rem;
+  }
+
+  @media (max-width: 820px) {
+    .grid { grid-template-columns: 1fr; }
+    .scores-header,
+    .score-row {
+      grid-template-columns: 1fr .8fr .8fr;
+    }
+    .hide-mobile { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="topbar">
+    <h1>AIMFORGE PLAYER PORTAL</h1>
+    <a class="nav-link" href="nn.html">Back To Leaderboard</a>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Login</h2>
+      <form id="login-form">
+        <div class="field">
+          <label for="login-username">Username</label>
+          <input id="login-username" required minlength="1" maxlength="50">
+        </div>
+        <div class="field">
+          <label for="login-password">Password</label>
+          <input id="login-password" type="password" required minlength="6" maxlength="128">
+        </div>
+        <button type="submit">Login</button>
+      </form>
+      <div class="status" id="login-status"></div>
+    </div>
+
+    <div class="card">
+      <h2>Register</h2>
+      <form id="register-form">
+        <div class="field">
+          <label for="register-username">Username</label>
+          <input id="register-username" required minlength="1" maxlength="50">
+        </div>
+        <div class="field">
+          <label for="register-password">Password</label>
+          <input id="register-password" type="password" required minlength="6" maxlength="128">
+        </div>
+        <button type="submit">Create Account</button>
+      </form>
+      <div class="status" id="register-status"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 16px;">
+    <h2>Edit Profile</h2>
+    <div class="status" style="margin-top: 0;">Update your username or password after logging in.</div>
+    <div class="field">
+      <label>Current Username</label>
+      <input id="edit-current-username" disabled value="Guest">
+    </div>
+    <form id="edit-form">
+      <div class="field">
+        <label for="edit-username">New Username</label>
+        <input id="edit-username" minlength="1" maxlength="50" placeholder="Leave blank to keep current username">
+      </div>
+      <div class="field">
+        <label for="edit-password">New Password</label>
+        <input id="edit-password" type="password" minlength="6" maxlength="128" placeholder="Leave blank to keep current password">
+      </div>
+      <button type="submit">Save Changes</button>
+    </form>
+    <div class="status" id="edit-status"></div>
+  </div>
+
+  <div class="card">
+    <div class="profile">
+      <div>Signed in as: <strong id="profile-username">Guest</strong></div>
+      <button class="secondary" id="logout-btn" type="button">Logout</button>
+    </div>
+
+    <h2>My Scores</h2>
+    <div class="scores-header">
+      <div>Mode</div>
+      <div>Hits</div>
+      <div>Misses</div>
+      <div class="hide-mobile">Score</div>
+      <div class="hide-mobile">Accuracy</div>
+      <div class="hide-mobile">Played At</div>
+    </div>
+    <div class="scores-body" id="scores-body">
+      <div class="empty">Login to load your personal scores.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_BASE = `${window.location.protocol}//${window.location.hostname || '127.0.0.1'}:8000`;
+const TOKEN_KEY = 'aimforge_token';
+const USERNAME_KEY = 'aimforge_username';
+
+function setStatus(id, message, isError = false) {
+  const el = document.getElementById(id);
+  el.textContent = message;
+  el.style.color = isError ? '#ff6666' : '#4a7a99';
+}
+
+function saveSession(token, username) {
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(USERNAME_KEY, username);
+}
+
+function clearSession() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USERNAME_KEY);
+}
+
+function token() {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+function username() {
+  return localStorage.getItem(USERNAME_KEY);
+}
+
+async function login(payload) {
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(`Login failed (${res.status})`);
+  return await res.json();
+}
+
+async function register(payload) {
+  const res = await fetch(`${API_BASE}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(`Register failed (${res.status})`);
+  return await res.json();
+}
+
+async function me() {
+  const res = await fetch(`${API_BASE}/auth/me`, {
+    headers: { Authorization: `Bearer ${token()}` },
+  });
+  if (!res.ok) throw new Error('Session expired');
+  return await res.json();
+}
+
+async function myScores(targetUsername) {
+  const params = new URLSearchParams({ limit: '50', offset: '0', sort_by: 'date' });
+  const res = await fetch(`${API_BASE}/leaderboard/player/${encodeURIComponent(targetUsername)}?${params.toString()}`);
+  if (!res.ok) throw new Error('Could not load scores');
+  return await res.json();
+}
+
+async function updateProfile(targetUsername, payload) {
+  const res = await fetch(`${API_BASE}/player/${encodeURIComponent(targetUsername)}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token()}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(`Update failed (${res.status})`);
+  return await res.json();
+}
+
+function renderScores(rows) {
+  const body = document.getElementById('scores-body');
+  if (!rows.length) {
+    body.innerHTML = '<div class="empty">No scores found yet.</div>';
+    return;
+  }
+
+  body.innerHTML = rows.map((row) => {
+    const playedAt = row.played_at ? new Date(row.played_at).toLocaleString() : '—';
+    return `<div class="score-row">
+      <div>${row.mode || '—'}</div>
+      <div>${row.hits}</div>
+      <div>${row.misses}</div>
+      <div class="hide-mobile">${row.score}</div>
+      <div class="hide-mobile">${Number(row.accuracy).toFixed(1)}%</div>
+      <div class="hide-mobile">${playedAt}</div>
+    </div>`;
+  }).join('');
+}
+
+async function refreshProfileAndScores() {
+  const currentToken = token();
+  if (!currentToken) {
+    document.getElementById('profile-username').textContent = 'Guest';
+    document.getElementById('edit-current-username').value = 'Guest';
+    document.getElementById('edit-username').value = '';
+    document.getElementById('edit-password').value = '';
+    renderScores([]);
+    return;
+  }
+
+  try {
+    const profile = await me();
+    const currentUsername = profile.username || username() || 'unknown';
+    localStorage.setItem(USERNAME_KEY, currentUsername);
+    document.getElementById('profile-username').textContent = currentUsername;
+    document.getElementById('edit-current-username').value = currentUsername;
+
+    const rows = await myScores(currentUsername);
+    renderScores(rows);
+  } catch (err) {
+    clearSession();
+    document.getElementById('profile-username').textContent = 'Guest';
+    renderScores([]);
+    setStatus('login-status', String(err.message || err), true);
+  }
+}
+
+document.getElementById('edit-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  const currentUsername = username();
+  if (!currentUsername) {
+    setStatus('edit-status', 'Log in before editing your profile.', true);
+    return;
+  }
+
+  const newUsername = document.getElementById('edit-username').value.trim();
+  const newPassword = document.getElementById('edit-password').value;
+  const payload = {};
+
+  if (newUsername) payload.new_username = newUsername;
+  if (newPassword) payload.password = newPassword;
+
+  if (!payload.new_username && !payload.password) {
+    setStatus('edit-status', 'Enter a new username or password to update.', true);
+    return;
+  }
+
+  try {
+    await updateProfile(currentUsername, payload);
+
+    if (payload.new_username && payload.new_username !== currentUsername) {
+      clearSession();
+      setStatus('edit-status', 'Username changed. Please log in again with the new username.');
+      document.getElementById('profile-username').textContent = 'Guest';
+      document.getElementById('edit-current-username').value = 'Guest';
+      document.getElementById('edit-username').value = '';
+      document.getElementById('edit-password').value = '';
+      renderScores([]);
+      return;
+    }
+
+    setStatus('edit-status', 'Profile updated successfully.');
+    document.getElementById('edit-password').value = '';
+    await refreshProfileAndScores();
+  } catch (err) {
+    setStatus('edit-status', String(err.message || err), true);
+  }
+});
+
+document.getElementById('login-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const payload = {
+    username: document.getElementById('login-username').value.trim(),
+    password: document.getElementById('login-password').value,
+  };
+
+  try {
+    const data = await login(payload);
+    saveSession(data.access_token, data.username);
+    setStatus('login-status', 'Login successful.');
+    setStatus('register-status', '');
+    await refreshProfileAndScores();
+  } catch (err) {
+    setStatus('login-status', String(err.message || err), true);
+  }
+});
+
+document.getElementById('register-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const payload = {
+    username: document.getElementById('register-username').value.trim(),
+    password: document.getElementById('register-password').value,
+  };
+
+  try {
+    const data = await register(payload);
+    saveSession(data.access_token, data.username);
+    setStatus('register-status', 'Account created and logged in.');
+    setStatus('login-status', '');
+    await refreshProfileAndScores();
+  } catch (err) {
+    setStatus('register-status', String(err.message || err), true);
+  }
+});
+
+document.getElementById('logout-btn').addEventListener('click', () => {
+  clearSession();
+  setStatus('login-status', 'Logged out.');
+  setStatus('register-status', '');
+  setStatus('edit-status', '');
+  refreshProfileAndScores();
+});
+
+refreshProfileAndScores();
+</script>
+</body>
+</html>
