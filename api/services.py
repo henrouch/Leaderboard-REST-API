@@ -3,6 +3,7 @@ from fastapi import HTTPException, status
 from api.db import get_connection
 from api.schemas import LeaderboardEntry, ModeOut, ScoreIn
 from psycopg2.extras import RealDictCursor  # type: ignore[import-untyped]
+from datetime import date
 
 
 MODE_ALIASES = {
@@ -209,3 +210,81 @@ def list_modes() -> list[ModeOut]:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
         ) from exc
+    
+
+#RankedPlayers 
+def get_ranked_players(limit: int):
+    try:
+        with get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute(
+                    """
+                    SELECT 
+                        DENSE_RANK() OVER (ORDER BY gr.hits DESC, gr.accuracy DESC) as rank,
+                        u.username,
+                        gr.hits,
+                        gr.misses,
+                        gr.accuracy,
+                        gr.played_at,
+                        gm.name AS mode
+                    FROM game_results gr
+                    JOIN users u ON gr.user_id = u.id
+                    JOIN game_modes gm ON gr.mode_id = gm.id
+                    ORDER BY rank
+                    LIMIT %s;
+                    """,
+                    (limit,)
+                )
+                return cursor.fetchall()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
+        ) from exc
+
+#Leaderboard
+def get_filtered_leaderboard(player: str | None, mode: str | None, min_score: int | None, played_date: date | None):
+    try:
+        base_query = """
+            SELECT 
+                u.username,
+                gr.hits,
+                gr.misses,
+                gr.accuracy,
+                gr.played_at,
+                gm.name AS mode
+            FROM game_results gr
+            JOIN users u ON gr.user_id = u.id
+            JOIN game_modes gm ON gr.mode_id = gm.id
+            WHERE 1=1
+        """
+        params = []
+        
+        if player:
+            base_query += " AND u.username ILIKE %s" 
+            params.append(f"%{player}%") 
+        
+        if mode:
+            base_query += " AND gm.name ILIKE %s"
+            params.append(f"%{mode}%")
+            
+        if min_score:
+            base_query += " AND gr.hits >= %s"
+            params.append(min_score)
+            
+        if played_date:
+            base_query += " AND DATE(gr.played_at) = %s"
+            params.append(played_date)
+            
+        base_query += " ORDER BY gr.hits DESC, gr.accuracy DESC"
+
+        with get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute(base_query, tuple(params))
+                return cursor.fetchall()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
+        ) from exc
+    
+
+
