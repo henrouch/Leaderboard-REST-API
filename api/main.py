@@ -8,6 +8,13 @@ from api.bootstrap import ensure_database_setup
 from api.routes import router
 
 
+def _env_bool(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
 app = FastAPI(title="Aim Trainer API", version="1.0.0")
 
 app.add_middleware(
@@ -31,5 +38,5 @@ if __name__ == "__main__":
         "api.main:app",
         host=os.getenv("APP_HOST", "127.0.0.1"),
         port=int(os.getenv("APP_PORT", "8000")),
-        reload=True,
+        reload=_env_bool("APP_RELOAD", default=False),
     )

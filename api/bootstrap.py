@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
+import time
 import sys
 
 from api.db import get_connection
@@ -11,6 +13,35 @@ BASE_DIR = Path(__file__).resolve().parent
 DATABASE_DIR = BASE_DIR / "database"
 SCHEMA_FILE = DATABASE_DIR / "schema.sql"
 SEED_FILE = DATABASE_DIR / "seed.sql"
+
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
+def _wait_for_database() -> None:
+    timeout_seconds = int(os.getenv("DB_WAIT_TIMEOUT_SECONDS", "60"))
+    interval_seconds = float(os.getenv("DB_WAIT_INTERVAL_SECONDS", "1"))
+    deadline = time.monotonic() + max(0, timeout_seconds)
+    last_error: Exception | None = None
+
+    while time.monotonic() <= deadline:
+        try:
+            with get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT 1")
+                    cursor.fetchone()
+            return
+        except Exception as exc:  # pragma: no cover - runtime environment dependent
+            last_error = exc
+            time.sleep(interval_seconds)
+
+    raise RuntimeError(
+        f"Database was not reachable within {timeout_seconds} seconds."
+    ) from last_error
 
 
 def _table_exists(cursor, table_name: str) -> bool:
@@ -51,12 +82,19 @@ def initialize_database() -> None:
 
 
 def ensure_database_setup() -> None:
+    _wait_for_database()
+
     if database_ready():
+        return
+
+    auto_init = _env_bool("AUTO_INIT_DB", default=False)
+    if auto_init:
+        initialize_database()
         return
 
     if not sys.stdin.isatty():
         raise RuntimeError(
-            "Database is not initialized. Run the server from a terminal to approve automatic setup."
+            "Database is not initialized. Set AUTO_INIT_DB=true for container startup, or run from a terminal to approve setup."
         )
 
     answer = (

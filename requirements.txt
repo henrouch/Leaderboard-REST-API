@@ -1,0 +1,6 @@
+fastapi
+psycopg2-binary
+uvicorn
+python-dotenv
+pyjwt
+passlib
